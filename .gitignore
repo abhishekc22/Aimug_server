@@ -1,0 +1,31 @@
+# Virtual environment
+myenv/
+env/
+
+# IDE files (e.g., PyCharm, VS Code)
+.idea/
+.vscode/
+
+# Compiled Python files
+*.pyc
+
+# Local development settings (e.g., settings/local.py)
+/your_project_name/settings/local.py
+
+# Logs and databases
+/db.sqlite3
+/logs/
+
+# Static files (if managed by a CDN or generated)
+/staticfiles/
+
+# Media files (user uploaded content)
+/media/
+
+# Ignore pipenv or poetry lock files if using
+Pipfile.lock
+poetry.lock
+
+# Ignore any other sensitive or local files
+.env
+.env.*
