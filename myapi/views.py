@@ -172,12 +172,9 @@ class CustomUserListView(generics.ListAPIView):
 
 
 class ApplyForJobView(APIView):
-
     def post(self, request, job_id):
         try:
-            print(job_id)
             job_posting = JobApplication.objects.get(id=job_id)
-            print(job_posting)
         except JobApplication.DoesNotExist:
             return Response({"error": "Job posting not found"}, status=status.HTTP_404_NOT_FOUND)
 
@@ -196,7 +193,7 @@ class ApplyForJobView(APIView):
             'status': request.data.get('status', 'Pending')
         }
 
-        serializer = JobApplicationSerializer(data=data)
+        serializer = JobApplyingSerializer(data=data)
         if serializer.is_valid():
             job_application = serializer.save()
             return Response({"message": "Application submitted successfully", "application_id": job_application.id}, status=status.HTTP_201_CREATED)

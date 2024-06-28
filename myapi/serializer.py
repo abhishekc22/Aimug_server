@@ -24,5 +24,5 @@ class JobApplicationSerializer(serializers.ModelSerializer):
 class JobApplyingSerializer(serializers.ModelSerializer):
     class Meta:
         model = Job_applying
-        fields = '__all__'
+        fields = ['user', 'Job_application', 'status']
       
