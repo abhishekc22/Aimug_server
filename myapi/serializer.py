@@ -26,3 +26,13 @@ class JobApplyingSerializer(serializers.ModelSerializer):
         model = Job_applying
         fields = ['user', 'Job_application', 'status']
       
+class BlogSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Blog
+        fields = ['id', 'title', 'content', 'author', 'created_at']
+
+
+class ServiceSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Service
+        fields = '__all__'

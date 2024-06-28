@@ -54,3 +54,22 @@ class Job_applying(models.Model):
         return f"{self.user.username} applied for {self.Job_application.position_name}"
 
 # Create your models here.
+
+
+class Blog(models.Model):
+    title = models.CharField(max_length=200)
+    content = models.TextField()
+    author = models.CharField(max_length=100)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.title
+    
+class Service(models.Model):
+    title = models.CharField(max_length=100)
+    description = models.TextField()
+    content = models.TextField() 
+    image = models.ImageField(upload_to='service_images') 
+
+    def __str__(self):
+        return self.title
