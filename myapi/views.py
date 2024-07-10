@@ -9,13 +9,19 @@ from django.contrib.auth import authenticate
 import random
 from django.core.mail import send_mail
 from rest_framework import generics
+import logging
+logger = logging.getLogger(__name__)
 
 
 
 class SignupView(APIView):
     def post(self, request):
         serializer = UserSerializer(data=request.data)
+        print(request.data)
+
+
         if serializer.is_valid():
+            print(serializer.data,'56666666666')
             otp = ''.join(random.choices('0123456789', k=4))
             user_data = serializer.validated_data
             user = CustomUser.objects.create(
@@ -28,15 +34,18 @@ class SignupView(APIView):
             verified_user = VerifiedUser.objects.create(user=user, otp=otp)
             data = {'userid': user.id}
             return Response(data=data, status=status.HTTP_201_CREATED)
+        print(serializer.errors,'566666666666666666666666')
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
     
-
     def send_otp_email(self, email, otp):
         subject = 'OTP Verification'
         message = f'Your OTP for verification is: {otp}'
-        from_email ='abhishek234264@gmail.com'  
+        from_email = 'servicescc.002@gmail.com'
         recipient_list = [email]
         send_mail(subject, message, from_email, recipient_list)
+    
+
+   
 
 
 
@@ -117,7 +126,11 @@ class SuperuserLoginView(APIView):
                 status=status.HTTP_400_BAD_REQUEST,
             )
 
-        return Response({"message": "Login successful"}, status=status.HTTP_200_OK)
+        return Response({
+            "message": "Login successful",
+            "username": user.username,
+            "email": user.email
+        }, status=status.HTTP_200_OK)
 
 
 
@@ -170,6 +183,11 @@ class CustomUserListView(generics.ListAPIView):
     serializer_class = UserSerializer
 
 
+class Cutomerupdate_delete(generics.RetrieveUpdateDestroyAPIView):
+    queryset = CustomUser.objects.filter(is_verified = True)
+    serializer_class = UserSerializer
+
+
 
 class ApplyForJobView(APIView):
     def post(self, request, job_id):
@@ -216,3 +234,137 @@ class ServiceListCreateAPIView(generics.ListCreateAPIView):
 class ServiceRetrieveUpdateDestroyAPIView(generics.RetrieveUpdateDestroyAPIView):
     queryset = Service.objects.all()
     serializer_class = ServiceSerializer
+
+
+
+class EnquiryUserListCreateAPIView(APIView):
+    def get(self, request, format=None):
+        queryset = EnquiryUser.objects.all()
+        serializer = Enquieyserializer(queryset, many=True)
+        return Response(serializer.data)
+    
+    def post(self, request, format=None):
+        serializer = Enquieyserializer(data=request.data)
+        if serializer.is_valid():
+            instance = serializer.save()
+            subject = 'New Enquiry'
+            message = f'New enquiry from {instance.username}. Email: {instance.email}'
+            from_email = request.data.get('email', settings.DEFAULT_FROM_EMAIL)
+            send_mail(subject, message, from_email, ['servicescc.002@gmail.com'])
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+
+class RequestPasswordResetView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = EmailSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            try:
+                user = CustomUser.objects.get(email=email)
+                
+                # Generate a new OTP
+                otp = ''.join(random.choices('0123456789', k=4))
+                
+                # Update or create a VerifiedUser record
+                verified_user, created = VerifiedUser.objects.update_or_create(
+                    user=user,
+                    defaults={'otp': otp, 'is_verified': False}
+                )
+
+                # Send the OTP email
+                self.send_otp_email(user.email, otp)
+                
+                return Response({'message': 'OTP sent to your email.'},status=status.HTTP_200_OK)
+            except CustomUser.DoesNotExist:
+                return Response({'error': 'Email does not exist.'}, status=status.HTTP_400_BAD_REQUEST)
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+    def send_otp_email(self, email, otp):
+        subject = 'OTP Verification'
+        message = f'Your OTP for verification is: {otp}'
+        from_email = 'servicescc.002@gmail.com'
+        recipient_list = [email]
+        send_mail(subject, message, from_email, recipient_list)
+
+
+
+
+class OTPPasswordSetView(APIView):
+    def post(self, request, *args, **kwargs):
+        serializer = OTPPasswordSetSerializer(data=request.data)
+        if serializer.is_valid():
+            email = serializer.validated_data['email']
+            otp = serializer.validated_data['otp']
+            new_password = serializer.validated_data['new_password']
+
+
+            try:
+                user = CustomUser.objects.get(email=email)
+                verified_user = VerifiedUser.objects.get(user=user)
+
+
+                if verified_user.otp == otp:
+                    # Update the user's password
+                    user.password = make_password(new_password)
+                    user.is_verified = True  # Optionally mark user as verified
+                    user.save()
+
+                    # Mark OTP as used or delete it if necessary
+                    verified_user.is_verified = True
+                    verified_user.save()
+
+
+                    return Response({'message': 'Password updated successfully.'})
+                else:
+                    return Response({'error': 'Invalid OTP.'}, status=status.HTTP_400_BAD_REQUEST)
+
+            except CustomUser.DoesNotExist:
+                return Response({'error': 'User not found.'}, status=status.HTTP_400_BAD_REQUEST)
+            except VerifiedUser.DoesNotExist:
+                return Response({'error': 'OTP verification record not found.'}, status=status.HTTP_400_BAD_REQUEST)
+        print(serializer.errors)
+
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+
+
+class AdminSignupView(APIView):
+    def post(self, request, *args, **kwargs):
+        print(request.data,'******************')
+        serializer = AdminSignupSerializer(data=request.data)
+        if serializer.is_valid():
+            serializer.save()
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        print(serializer.errors,'??????????????')
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+    
+
+class AdminloginView(APIView):
+    def post(self, request, *args, **kwargs):
+        email = request.data.get('email')
+        password = request.data.get('password')
+        user = authenticate(request, email=email, password=password)
+        
+        if user is not None:
+            if Admin.objects.filter(user=user).exists():
+                return Response({
+                    "message": "Login successful",
+                    "username": user.username,
+                    "email": user.email
+                    
+                })
+            else:
+                return Response({'detail': 'Not an admin'}, status=status.HTTP_401_UNAUTHORIZED)
+        return Response({'detail': 'Invalid credentials'}, status=status.HTTP_401_UNAUTHORIZED)
+    
+
+
+class AdminExistsView(APIView):
+    def get(self, request, *args, **kwargs):
+        admin_exists = Admin.objects.filter(user_role='admin').exists()
+        return Response({'admin_exists': admin_exists}, status=status.HTTP_200_OK)

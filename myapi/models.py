@@ -1,5 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.conf import settings
 
 
 class CustomUser(AbstractUser):
@@ -11,6 +12,13 @@ class CustomUser(AbstractUser):
 
     def __str__(self):
         return self.username
+    
+class Admin(models.Model):
+    user = models.ForeignKey(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    user_role = models.CharField(max_length=10, default='admin')
+
+    def __str__(self):
+        return self.user.email
     
 
 class VerifiedUser(models.Model):
@@ -61,6 +69,8 @@ class Blog(models.Model):
     content = models.TextField()
     author = models.CharField(max_length=100)
     created_at = models.DateTimeField(auto_now_add=True)
+    image = models.ImageField(upload_to='blog_images') 
+
 
     def __str__(self):
         return self.title
@@ -73,3 +83,13 @@ class Service(models.Model):
 
     def __str__(self):
         return self.title
+    
+
+class EnquiryUser(models.Model):
+    username = models.CharField(max_length=255)
+    email = models.EmailField(max_length=254)
+    phonenumber = models.CharField(max_length=20, blank=True)  
+    message = models.TextField()
+
+    def __str__(self):
+        return self.username

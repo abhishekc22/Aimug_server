@@ -9,6 +9,10 @@ admin.site.register(JobApplication)
 admin.site.register(Job_applying)
 admin.site.register(Blog)
 admin.site.register(Service)
+admin.site.register(EnquiryUser)
+admin.site.register(Admin)
+
+
 
 
 
